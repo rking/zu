@@ -2,11 +2,11 @@
 # The goal: like "uz", but smarter.
 
 # TODO:
-# - http://... (with wget first)
 # - Plus build?
 # - These:
 #     .lzma (unlzma)
 #     .tlz (unlzma)
+#     .7z (
 #     ...?
 
 class Array
@@ -23,13 +23,25 @@ def redwarn msg
     warn "\e[31m#{msg}\e[0m"
 end
 
+def maybe_download str
+  return str unless str[%r(^(?:ht|f)tp.+/(.+))]
+  $delete_afterward = true # just treat the download as temporary.
+  if File.exists? $1
+    redwarn "#$1 already exists. Not re-downloading."
+    exit 3
+  end
+  system 'wget', str
+  $1
+end
+
 $delete_afterward = false
 
-ARGV.each do |f|
-    if '-d' == f
+ARGV.each do |e|
+    if '-d' == e
       $delete_afterward = true
       next
     end
+    f = maybe_download e
     if not File.exists? f
         redwarn "'#{f}' doesn't seem to exist."
         next
@@ -48,7 +60,7 @@ ARGV.each do |f|
     end
 
     files_list, extract_cmd = *(
-        case ext
+        case ext.downcase
         when '.zip'
             [ run_and_split['zipinfo', '-1'], %w(unzip) ]
         when '.tar'
