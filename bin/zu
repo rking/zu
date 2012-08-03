@@ -2,11 +2,13 @@
 # The goal: like "uz", but smarter.
 
 # TODO:
-# - Plus build?
+# - Refactor this
+# - Build if given -b ?
 # - These:
 #     .lzma (unlzma)
 #     .tlz (unlzma)
-#     .7z (
+#     .7z (7z)
+#     .rpm
 #     ...?
 
 class Array
@@ -63,6 +65,8 @@ ARGV.each do |e|
         case ext.downcase
         when '.zip'
             [ run_and_split['zipinfo', '-1'], %w(unzip) ]
+        when '.deb', '.ar'
+            [ run_and_split['ar', 't'], %w(ar xv) ]
         when '.tar'
             [ run_and_split['tar', 'tf'], %w(tar xvf) ]
         when '.tar.gz', '.tgz'
