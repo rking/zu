@@ -2,8 +2,8 @@ zu
 ==
 
 Unzipper (in the tradition of `uz`, but better). Works for .tgz, .xz, .zip,
-you name it. (Literally. If you find an archive that it doesn't open, let me
-know about it and I'll add that.)
+.deb, .rpm — you name it. (Literally. If you find an archive that it doesn't
+open, let me know about it and I'll add that.)
 
 If you have an archive sitting there of format `xyz`, then `zu foo.xyz` should
 take care of it.
