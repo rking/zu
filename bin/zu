@@ -1,15 +1,18 @@
 #!/usr/bin/env ruby
-# The goal: like "uz", but smarter.
+## The goal: like "uz", but smarter.
 
 # TODO:
 # - Refactor this
+# - Add --help
+# - Make -d delete all archives on the args lit (use an options gem)
 # - Build if given -b ?
-# - These:
+# - Add these formats:
+#   .jar (zip)
 #   .lzma (unlzma)
 #   .tlz (unlzma)
 #   .7z (7z)
+#   .apk (zip?)
 #   ...?
-
 
 class Array
   def polite?
@@ -29,15 +32,20 @@ def maybe_download str
   return str unless str[%r(^(?:ht|f)tp.+/(.+))]
   $delete_afterward = true # just treat the download as temporary.
   if File.exists? $1
-  redwarn "#$1 already exists. Not re-downloading."
-  exit 3
+    redwarn "#$1 already exists. Not re-downloading."
+    exit 3
   end
   system 'wget', str
   $1
 end
 
-$delete_afterward = false
+def rpm2tgz rpm_name
+    tgzname = File.basename(full_path, '.rpm') + '.tgz'
+    system 'rpm2tgz', full_path
+    tgzname
+end
 
+$delete_afterward = false
 def extract e
   if '-d' == e
     $delete_afterward = true
@@ -54,36 +62,23 @@ def extract e
     ext = '.tar' + ext
   end
 
-  run_and_split = proc do |*cmd_and_args|
-    IO.popen(cmd_and_args.push full_path).read.split /\n/
+  run_and_split = proc do |cmd_and_args|
+    IO.popen(cmd_and_args + ' ' + full_path).read.split /\n/
   end
 
   files_list, extract_cmd = *(
     case ext.downcase
-    when '.zip'
-      [ run_and_split['zipinfo', '-1'], %w(unzip) ]
-    when '.tar'
-      [ run_and_split['tar', 'tf'], %w(tar xvf) ]
-    when '.tar.gz', '.tgz'
-      [ run_and_split['tar', 'tzf'], %w(tar xvzf) ]
-    when '.tar.bz2', '.tbz2'
-      [ run_and_split['tar', 'tjf'], %w(tar xvjf) ]
-    when '.tar.xz', '.txz'
-      [ run_and_split['tar', 'tJf'], %w(tar xvJf) ]
-    when '.deb', '.ar'
-      [ run_and_split['ar', 't'], %w(ar xv) ]
-    when '.rpm'
-      tgzname = File.basename(full_path, '.rpm') + '.tgz'
-      system 'rpm2tgz', full_path
-      return extract tgzname
+    when '.zip'; [ run_and_split['zipinfo -1'], %w(unzip) ]
+    when '.tar'; [ run_and_split['tar tf'], %w(tar xvf) ]
+    when '.tar.gz', '.tgz'; [ run_and_split['tar tzf'], %w(tar xvzf) ]
+    when '.tar.bz2', '.tbz2'; [ run_and_split['tar tjf'], %w(tar xvjf) ]
+    when '.tar.xz', '.txz'; [ run_and_split['tar tJf'], %w(tar xvJf) ]
+    when '.deb', '.ar'; [ run_and_split['ar t'], %w(ar xv) ]
+    when '.rpm'; return extract rpm2tgz[full_path]
     when '.gz', '.xz', '.bz2'
       [
         [ simplename ],
-        {
-          '.gz' => %w(gunzip),
-          '.xz' => %w(unxz),
-          '.bz2' => %w(bunzip2),
-        }[ext]
+        { '.gz' => %w(gunzip), '.xz' => %w(unxz), '.bz2' => %w(bunzip2) }[ext]
       ]
     else
       return redwarn "'#{f}' - Unknown extension. Doing nothing with it."

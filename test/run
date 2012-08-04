@@ -1,18 +1,12 @@
 #!/bin/bash -xe
-
-echo "Need to test the tests."; exit 9
-
+## Quick'n'dirtay tests. Use git to ensure no undesired diffs on the greenbar.
 cd $(dirname $0)
-rm -rf zu-output/*.*
-cd zu-output
-
-INPUTS=$(pwd)/../zu-input/*.*
-for n in $INPUTS; do
-    BASENAME=$(basename $n)
-    [ -e $BASENAME ] || mkdir $BASENAME
+cleancd() { rm -rf $1; mkdir $1 && cd $1; }
+cleancd greenbar
+for n in ../input/*.*; do
     (
-        cd $BASENAME
-        zu $n >1 2>2
+        cleancd $(basename $n)
+        ../../../bin/zu ../$n >1 2>2 || cat 1 2
     )
 done
 ls -l *
