@@ -35,7 +35,9 @@ def maybe_download str
     redwarn "#$1 already exists. Not re-downloading."
     exit 3
   end
-  system 'wget', str
+  unless system 'wget', str
+    redwarn "#$1 appears to be a downloadable file, but download failed. Please verify that 'wget' is installed and available in your PATH."
+  end
   $1
 end
 
