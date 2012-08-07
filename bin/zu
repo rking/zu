@@ -36,7 +36,9 @@ def maybe_download str
     exit 3
   end
   unless system 'wget', str
-    redwarn "#$1 appears to be a downloadable file, but download failed. Please verify that 'wget' is installed and available in your PATH."
+    redwarn "#$1 appears to be a downloadable file, but download failed."
+    warn 'Please verify that `wget` is installed and available in your PATH.'
+    exit 4
   end
   $1
 end
